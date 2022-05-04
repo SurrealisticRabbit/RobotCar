@@ -12,8 +12,8 @@ const int Bin1 = 25;
 const int Bin2 = 33;
 
 // Pins for PWM (Speed Control) and Enable (On/Off)
-const int aEN = 14;
-const int bEN = 12;
+const int aEN = 12;
+const int bEN = 14;
 
 // Extra Variabled for ESP32 PWM
 const int freq = 30000; // Setting frequency
@@ -28,6 +28,10 @@ int dutyCycle = 200; // Default for l298N
 
 // Variables for bluetooth
 BluetoothSerial SerialBT;
+char BlData;
+
+// A motor is Right
+// B motor is Left
 
 void setupMotor(){
 
@@ -53,9 +57,22 @@ void setupMotor(){
 void foward(){
   digitalWrite(Ain1, 1);
   digitalWrite(Ain2, 0); 
+  digitalWrite(Bin1, 0);
+  digitalWrite(Bin2, 0);
+}
+
+void left(){
+  digitalWrite(Ain1, 1);
+  digitalWrite(Ain2, 0); 
+  digitalWrite(Bin1, 0);
+  digitalWrite(Bin2, 0);
+}
+
+void right(){
+  digitalWrite(Ain1, 0);
+  digitalWrite(Ain2, 0); 
   digitalWrite(Bin1, 1);
   digitalWrite(Bin2, 0);
-  delay(2000);
 }
 
 void stop(){
@@ -65,33 +82,77 @@ void stop(){
   digitalWrite(Bin2, 0);
 }
 
-// backwards (for one motor)
-// digitalWrite(Xin1, HIGH);
-// digitalWrite(Xin2, LOW); 
-
 void setup() {
   setupMotor();
 
   Serial.begin(115200);
-  SerialBT.begin("Robot car thing");
+  SerialBT.begin("ESP32 Car");
 
 }
 
 void loop() {
 
   // If serial avaliable on either get and then send on the other
-
   if (Serial.available()){
     SerialBT.write(Serial.read());
   }
   if (SerialBT.available()){
     Serial.write(SerialBT.read());
 
-    Serial.println('Bluetooth data recieved');
+    // Reading char from BT side - if mactches control char then will start
+    // action tied to the letter
+    
+    // W = UP    | w = STOP
+    // S = DOWN  | s = STOP
+    // A = LEFT  | a = STOP
+    // D = RIGHT | d = STOP
+
+    BlData = SerialBT.read();
   }
+
+  if (BlData == 'W'){
+    digitalWrite(Ain1, 1);
+    digitalWrite(Ain2, 0); 
+    digitalWrite(Bin1, 1);
+    digitalWrite(Bin2, 0);
+  }
+  else if (BlData == 'w'){
+    stop();
+  }
+
+  if (BlData == 'S'){
+    digitalWrite(Ain1, 1);
+    digitalWrite(Ain2, 0); 
+    digitalWrite(Bin1, 1);
+    digitalWrite(Bin2, 0);
+  }
+  else if (BlData == 's'){
+    stop();
+  }
+
+  if (BlData == 'Q'){
+    digitalWrite(Ain1, 1);
+    digitalWrite(Ain2, 0); 
+    digitalWrite(Bin1, 1);
+    digitalWrite(Bin2, 0);
+  }
+  else if (BlData == 'q'){
+    stop();
+  }
+
+  if (BlData == 'E'){
+    digitalWrite(Ain1, 1);
+    digitalWrite(Ain2, 0); 
+    digitalWrite(Bin1, 1);
+    digitalWrite(Bin2, 0);
+  }
+  else if (BlData == 'e'){
+    stop();
+  }
+
+  dutyCycle = 255;
 
   // tells pwm channels to send pwm
   ledcWrite(pwmChannel1, dutyCycle);
   ledcWrite(pwmChannel2, dutyCycle);
-  foward();
 }
